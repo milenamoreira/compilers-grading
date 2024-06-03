@@ -1,4 +1,4 @@
-*
+/*
  * cool_parser.y
  * Definition for the COOL language parser.
  */
@@ -92,43 +92,53 @@ class_list
   | error ';' {};
 
 class
-  : CLASS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2, idtable.add_string("Object"), $4, stringtable.add_string(filename)); }
-  | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2, $4, $6, stringtable.add_string(filename)); };
+  : CLASS TYPEID '{' feature_list '}' ';' {
+      $$ = class_($2, idtable.add_string("Object"), $4, stringtable.add_string(filename));
+    }
+  | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';' {
+      $$ = class_($2, $4, $6, stringtable.add_string(filename));
+    };
 
 feature_list
-  : { $$ = nil_Features(); } /* empty feature list */
+  : { $$ = nil_Features(); }
   | feature_list feature { $$ = append_Features($1, single_Features($2)); }
   | error ';' {};
 
 feature
-  : OBJECTID ':' TYPEID ';'
-    { $$ = attr($1, $3, no_expr()); }
-  | OBJECTID ':' TYPEID ASSIGN expression ';'
-    { $$ = attr($1, $3, $5); }
-  | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' ';'
-    { $$ = method($1, $3, $6, $8); };
+  : OBJECTID ':' TYPEID ';' {
+      $$ = attr($1, $3, no_expr());
+    }
+  | OBJECTID ':' TYPEID ASSIGN expression ';' {
+      $$ = attr($1, $3, $5);
+    }
+  | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' ';' {
+      $$ = method($1, $3, $6, $8);
+    };
 
 formal_list
-  : { $$ = nil_Formals(); } /* no formal parameters */
+  : { $$ = nil_Formals(); }
   | formal { $$ = single_Formals($1); }
   | formal_list ',' formal { $$ = append_Formals($1, single_Formals($3)); };
 
 formal
-  : OBJECTID ':' TYPEID { $$ = formal($1, $3); };
+  : OBJECTID ':' TYPEID {
+      $$ = formal($1, $3);
+    };
 
 case_list
-  : { $$ = nil_Cases(); } /* empty case list */
+  : { $$ = nil_Cases(); }
   | case_list case { $$ = append_Cases($1, single_Cases($2)); };
 
 case
-  : OBJECTID ':' TYPEID DARROW expression ';'
-    { $$ = branch($1, $3, $5); };
+  : OBJECTID ':' TYPEID DARROW expression ';' {
+      $$ = branch($1, $3, $5);
+    };
 
 expression_list
   : expression ';' { $$ = single_Expressions($1); }
-  | expression_list expression ';' { $$ = append_Expressions($1, single_Expressions($2)); }
+  | expression_list expression ';' {
+      $$ = append_Expressions($1, single_Expressions($2));
+    }
   | expression_list error ';' {}
   | expression_list error {}
   | error {};
@@ -136,55 +146,121 @@ expression_list
 dispatch_list
   : { $$ = nil_Expressions(); }
   | expression { $$ = single_Expressions($1); }
-  | dispatch_list ',' expression { $$ = append_Expressions($1, single_Expressions($3)); }
+  | dispatch_list ',' expression {
+      $$ = append_Expressions($1, single_Expressions($3));
+    }
   | dispatch_list error ';' {};
 
 expression
-  : OBJECTID ASSIGN expression { $$ = assign($1, $3); }
-  | expression '@' TYPEID '.' OBJECTID '(' dispatch_list ')' { $$ = static_dispatch($1, $3, $5, $7); }
-  | expression '.' OBJECTID '(' dispatch_list ')' { $$ = dispatch($1, $3, $5); }
-  | OBJECTID '(' dispatch_list ')' { $$ = dispatch(object(idtable.add_string("self")), $1, $3); }
-  | IF expression THEN expression ELSE expression FI { $$ = cond($2, $4, $6); }
-  | WHILE expression LOOP expression POOL { $$ = loop($2, $4); }
-  | '{' expression_list '}' { $$ = block($2); }
-  | OBJECTID ':' TYPEID ',' expression { $$ = let($1, $3, no_expr(), $5); }
-  | OBJECTID ':' TYPEID IN expression { $$ = let($1, $3, no_expr(), $5); }
-  | LET OBJECTID ':' TYPEID ',' expression { $$ = let($2, $4, no_expr(), $6); }
-  | OBJECTID ':' TYPEID ASSIGN expression ',' expression { $$ = let($1, $3, $5, $7); }
-  | OBJECTID ':' TYPEID ASSIGN expression IN expression { $$ = let($1, $3, $5, $7); }
-  | LET OBJECTID ':' TYPEID ASSIGN expression ',' expression { $$ = let($2, $4, $6, $8); }
-  | LET OBJECTID ':' TYPEID IN expression { $$ = let($2, $4, no_expr(), $6); }
-  | LET OBJECTID ':' TYPEID ASSIGN expression IN expression { $$ = let($2, $4, $6, $8); }
-  | CASE expression OF case_list ESAC { $$ = typcase($2, $4); }
-  | NEW TYPEID { $$ = new_($2); }
-  | ISVOID expression { $$ = isvoid($2); }
-  | expression '+' expression { $$ = plus($1, $3); }
-  | expression '-' expression { $$ = sub($1, $3); }
-  | expression '*' expression { $$ = mul($1, $3); }
-  | expression '/' expression { $$ = divide($1, $3); }
-  | '~' expression { $$ = neg($2); }
-  | expression LE expression { $$ = leq($1, $3); }
-  | expression '<' expression { $$ = lt($1, $3); }
-  | expression '=' expression { $$ = eq($1, $3); }
-  | NOT expression { $$ = comp($2); }
-  | '(' expression ')' { $$ = $2; }
-  | OBJECTID { $$ = object($1); }
-  | INT_CONST { $$ = int_const($1); }
-  | STR_CONST { $$ = string_const($1); }
-  | BOOL_CONST { if($1) $$ = bool_const(true); else $$ = bool_const(false); };
+  : OBJECTID ASSIGN expression {
+      $$ = assign($1, $3);
+    }
+  | expression '@' TYPEID '.' OBJECTID '(' dispatch_list ')' {
+      $$ = static_dispatch($1, $3, $5, $7);
+    }
+  | expression '.' OBJECTID '(' dispatch_list ')' {
+      $$ = dispatch($1, $3, $5);
+    }
+  | OBJECTID '(' dispatch_list ')' {
+      $$ = dispatch(object(idtable.add_string("self")), $1, $3);
+    }
+  | IF expression THEN expression ELSE expression FI {
+      $$ = cond($2, $4, $6);
+    }
+  | WHILE expression LOOP expression POOL {
+      $$ = loop($2, $4);
+    }
+  | '{' expression_list '}' {
+      $$ = block($2);
+    }
+  | OBJECTID ':' TYPEID ',' expression {
+      $$ = let($1, $3, no_expr(), $5);
+    }
+  | OBJECTID ':' TYPEID IN expression {
+      $$ = let($1, $3, no_expr(), $5);
+    }
+  | LET OBJECTID ':' TYPEID ',' expression {
+      $$ = let($2, $4, no_expr(), $6);
+    }
+  | OBJECTID ':' TYPEID ASSIGN expression ',' expression {
+      $$ = let($1, $3, $5, $7);
+    }
+  | OBJECTID ':' TYPEID ASSIGN expression IN expression {
+      $$ = let($1, $3, $5, $7);
+    }
+  | LET OBJECTID ':' TYPEID ASSIGN expression ',' expression {
+      $$ = let($2, $4, $6, $8);
+    }
+  | LET OBJECTID ':' TYPEID IN expression {
+      $$ = let($2, $4, no_expr(), $6);
+    }
+  | LET OBJECTID ':' TYPEID ASSIGN expression IN expression {
+      $$ = let($2, $4, $6, $8);
+    }
+  | CASE expression OF case_list ESAC {
+      $$ = typcase($2, $4);
+    }
+  | NEW TYPEID {
+      $$ = new_($2);
+    }
+  | ISVOID expression {
+      $$ = isvoid($2);
+    }
+  | expression '+' expression {
+      $$ = plus($1, $3);
+    }
+  | expression '-' expression {
+      $$ = sub($1, $3);
+    }
+  | expression '*' expression {
+      $$ = mul($1, $3);
+    }
+  | expression '/' expression {
+      $$ = divide($1, $3);
+    }
+  | '~' expression {
+      $$ = neg($2);
+    }
+  | expression LE expression {
+      $$ = leq($1, $3);
+    }
+  | expression '<' expression {
+      $$ = lt($1, $3);
+    }
+  | expression '=' expression {
+      $$ = eq($1, $3);
+    }
+  | NOT expression {
+      $$ = comp($2);
+    }
+  | '(' expression ')' {
+      $$ = $2;
+    }
+  | OBJECTID {
+      $$ = object($1);
+    }
+  | INT_CONST {
+      $$ = int_const($1);
+    }
+  | STR_CONST {
+      $$ = string_const($1);
+    }
+  | BOOL_CONST {
+      if ($1) $$ = bool_const(true); else $$ = bool_const(false);
+    };
 
 %%
 
-/* This function is called automatically when Bison detects a parse error. */
+/* Function to handle parse errors */
 void syntax_error(char *s)
 {
-  extern int curr_lineno;
+  extern int lineno;
 
-  cerr << "\"" << filename << "\", line " << curr_lineno << ": " \
+  cerr << "\"" << filename << "\", line " << lineno << ": " \
     << s << " at or near ";
   print_cool_token(yychar);
   cerr << endl;
   num_errors++;
 
-  if(num_errors>50) {fprintf(stdout, "More than 50 errors\n"); exit(1);}
+  if (num_errors > 50) { fprintf(stdout, "More than 50 errors\n"); exit(1); }
 }
